@@ -92,10 +92,12 @@ The strategy adopted to handle invalid fields was to bypass the reading process 
 
 - The Solution: In the last stage of the program, the `writeCleanFile` function iterates over the array of events. If it finds an event with `is_valid == 0`, it simply triggers a `continue` and skips that iteration. The invalid record is removed from memory and not written to the output file, ensuring that the resulting log is 100% complete.
 
-4. Main Technical Difficulties Encountered
+### 4. Main Technical Difficulties Encountered
 
 This challenge is particularly easy if I could have done everything by brute force, but I MYSELF feel uncomfortable using those "magic numbers" (despite it being very easy and I still certainly do it frequently). To make everything as dynamic as possible, I ran into:
 
 - Flexible Parsing with sscanf: As the file mixed lines with identifiers (id=...) and lines without identifiers, in addition to multiple unpredictable delimiters (,, ;, |), it was necessary to construct extremely complex format specifiers in sscanf (such as %*[^=]=%[^,;|\n]). Finding the exact syntax using C regular expressions to capture the strings correctly and ignore the unnecessary ones was a pain, and I hope there isn't a better magic formula that I don't know.
 
-Pointers and Dynamic Memory Allocation: The log size dictates memory usage, so I avoided the common mistake of creating giant static arrays on the stack (in fact, I did this and reverted back).
+- Pointers and Dynamic Memory Allocation: The log size dictates memory usage, so I avoided the common mistake of creating giant static arrays on the stack (in fact, I did this and then reverted back), which would cause Stack Overflow in larger logs. The challenge was managing the entire file pointer with malloc and allocating the SecurityEvent array on the Heap, ensuring that all free() calls were made at the end to prevent memory leaks.
+
+- strtok Behavior: Using strtok to break the file lines in memory modifies the original string (inserting null characters \0). It was difficult to understand the order of operations well so as not to corrupt the data buffer before being able to extract all the information from each event (it gave a Segmentation Fault many times before working).
