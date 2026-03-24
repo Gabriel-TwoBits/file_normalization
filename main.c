@@ -21,6 +21,7 @@ FILE* openFile(char* fileName, char* mode);
 long checkFileSize(FILE* file);
 int validLinesCounter(FILE* file);
 void trimWhiteSpaces(char* text);
+void validLinesToStruct(char* fileContent, SecurityEvent events[]);
 
 int main(){
 	FILE* rawFile = openFile("raw_security_events.txt", "r");
@@ -39,6 +40,7 @@ int main(){
 	FileInfo fileInfo;
 	fileInfo.fileSize = checkFileSize(rawFile);
 	fileInfo.numberOfValidLines = validLinesCounter(rawFile);
+	rewind(rawFile);
 
 	char* fileContent = (char*) malloc(fileInfo.fileSize + 1);
 
@@ -49,8 +51,21 @@ int main(){
 	trimWhiteSpaces(fileContent);
 
 	SecurityEvent events[fileInfo.numberOfValidLines];
+	memset(events, 0, sizeof(events));
+
+	validLinesToStruct(fileContent, events);
 
 	printf("%s\n", fileContent);
+
+	for (int i = 0; i < fileInfo.numberOfValidLines; i++){
+		fprintf(cleanedFile, "%s\t;%s\t;%s\t;%s\t;%d\t;%s\n", 
+        events[i].event_id, 
+        events[i].device, 
+        events[i].severity,
+        events[i].status, 
+        events[i].failed_logins, 
+        events[i].source);
+	}
 
 	fclose(cleanedFile);
 
@@ -112,4 +127,39 @@ void trimWhiteSpaces(char* text){
 	};
 
 	*j = '\0';
+};
+
+void validLinesToStruct(char* fileContent, SecurityEvent events[]){
+	char *line;
+	int event_index = 0, i = 0;
+	char separators[] = ",;|";
+
+	line = strtok(fileContent, "\n");
+
+	while(line != NULL){
+		int count = 0;
+
+		for(int j = 0; line[j] != '\0'; j++){
+			if(strchr(separators, line[j])) count ++;
+		};
+
+		if(count == 5){
+			sscanf(line, "%[^,;|\n]%*[,;|\n]"  // event_id
+                          "%[^,;|\n]%*[,;|\n]"  // device
+                          "%[^,;|\n]%*[,;|\n]"  // severity
+                          "%[^,;|\n]%*[,;|\n]"  // status
+                          "%d%*[,;|\n]"         // failed_logins (inteiro)
+                          "%[^,;|\n]",          // source
+                   events[i].event_id,
+                   events[i].device,
+                   events[i].severity,
+                   events[i].status,
+                   &events[i].failed_logins,
+                   events[i].source);
+
+			events[i].is_valid = 1;
+			i++;
+		};
+		line = strtok(NULL, "\n");
+	};
 };
