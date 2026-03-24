@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 typedef struct {
 	char event_id[32];
@@ -22,6 +23,9 @@ long checkFileSize(FILE* file);
 int validLinesCounter(FILE* file);
 void trimWhiteSpaces(char* text);
 void validLinesToStruct(char* fileContent, SecurityEvent events[]);
+void writeCleanFile(FILE* file, SecurityEvent events[], int numberOfLines);
+void padronizeSeverity(SecurityEvent events[], int size);
+void padronizeStatus(SecurityEvent events[], int size);
 
 int main(){
 	FILE* rawFile = openFile("raw_security_events.txt", "r");
@@ -54,19 +58,10 @@ int main(){
 	memset(events, 0, sizeof(events));
 
 	validLinesToStruct(fileContent, events);
+	padronizeSeverity(events, fileInfo.numberOfValidLines);
+	padronizeStatus(events, fileInfo.numberOfValidLines);
 
-	printf("%s\n", fileContent);
-
-	for (int i = 0; i < fileInfo.numberOfValidLines; i++){
-		fprintf(cleanedFile, "%s\t;%s\t;%s\t;%s\t;%d\t;%s\n", 
-        events[i].event_id, 
-        events[i].device, 
-        events[i].severity,
-        events[i].status, 
-        events[i].failed_logins, 
-        events[i].source);
-	}
-
+	writeCleanFile(cleanedFile, events, fileInfo.numberOfValidLines);
 	fclose(cleanedFile);
 
 	return 0;
@@ -161,5 +156,72 @@ void validLinesToStruct(char* fileContent, SecurityEvent events[]){
 			i++;
 		};
 		line = strtok(NULL, "\n");
+	};
+};
+
+void padronizeSeverity(SecurityEvent events[], int size){
+	char *acceptedValues[] = {"LOW", "MEDIUM", "HIGH", "CRITICAL"};
+	int valids = 4;
+
+	for(int i = 0; i < size; i++){
+
+		for(int j = 0; events[i].severity[j]; j++){
+			events[i].severity[j] = toupper((unsigned char)events[i].severity[j]);
+		};
+
+		int found = 0;
+
+		for(int k = 0; k < valids; k++){
+			if(strcmp(events[i].severity, acceptedValues[k]) == 0){
+				found = 1;
+				break;
+			};
+		};
+
+		if(found == 0){
+			events[i].is_valid = 0;
+		};
+	};
+};
+
+void padronizeStatus(SecurityEvent events[], int size){
+	char *acceptedValues[] = {"OPEN", "CLOSED", "INVESTIGATING"};
+	int valids = 3;
+
+	for(int i = 0; i < size; i++){
+
+		for(int j = 0; events[i].status[j]; j++){
+			events[i].status[j] = toupper((unsigned char)events[i].status[j]);
+		};
+
+		int found = 0;
+
+		for(int k = 0; k < valids; k++){
+			if(strcmp(events[i].status, acceptedValues[k]) == 0){
+				found = 1;
+				break;
+			};
+		};
+
+		if(found == 0){
+			events[i].is_valid = 0;
+		};
+	};
+};
+
+void writeCleanFile(FILE* file, SecurityEvent events[], int numberOfLines){
+	if(file != NULL){
+		fprintf(file, "EVENT_ID;DEVICE;SEVERITY;STATUS;FAILED_LOGINS;SOURCE\n");
+
+		for (int i = 0; i < numberOfLines; i++){
+			if(events[i].is_valid == 0) continue;
+			fprintf(file, "%s\t;%s\t;%s\t;%s\t;%d\t;%s\n", 
+				events[i].event_id, 
+				events[i].device, 
+				events[i].severity,
+				events[i].status, 
+				events[i].failed_logins, 
+				events[i].source);
+		};
 	};
 };
