@@ -12,8 +12,14 @@ typedef struct {
 	int is_valid;
 } SecurityEvent;
 
+typedef struct {
+	int fileSize;
+	int numberOfValidLines;
+} FileInfo;
+
 FILE* openFile(char* fileName, char* mode);
 long checkFileSize(FILE* file);
+int validLinesCounter(FILE* file);
 void trimWhiteSpaces(char* text);
 
 int main(){
@@ -30,14 +36,19 @@ int main(){
 		return 1;
 	};
 
-	long fileSize = checkFileSize(rawFile);
+	FileInfo fileInfo;
+	fileInfo.fileSize = checkFileSize(rawFile);
+	fileInfo.numberOfValidLines = validLinesCounter(rawFile);
 
-	char* fileContent = (char*) malloc(fileSize + 1);
+	char* fileContent = (char*) malloc(fileInfo.fileSize + 1);
 
-	fread(fileContent, 1, fileSize, rawFile);
+	fread(fileContent, 1, fileInfo.fileSize, rawFile);
 	fclose(rawFile);
 
-	fileContent[fileSize] = '\0';
+	fileContent[fileInfo.fileSize] = '\0';
+	trimWhiteSpaces(fileContent);
+
+	SecurityEvent events[fileInfo.numberOfValidLines];
 
 	printf("%s\n", fileContent);
 
@@ -65,6 +76,40 @@ long checkFileSize(FILE* file){
 	return fileSize;
 };
 
-void trimWhiteSpaces(char* text){
+int validLinesCounter(FILE* file){
+	char separators[] = ",;|\n";
+	int character;
+	int separatorsCounter = 0, validLines = 0;
 
+	while ((character = fgetc(file)) != EOF){
+		if(strchr(separators, character)){
+			separatorsCounter++;
+		};
+
+		if(character == '\n'){
+			if(separatorsCounter == 6){
+				validLines++;
+			};
+
+			separatorsCounter = 0;
+		}
+	};
+
+	rewind(file);
+
+	return validLines;
+};
+
+void trimWhiteSpaces(char* text){
+	char *i = text;
+	char *j = text;
+
+	while(*i){
+		if(*i != ' '){
+			*j++ = *i;
+		};
+		i++;
+	};
+
+	*j = '\0';
 };
