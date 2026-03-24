@@ -21,6 +21,7 @@ typedef struct {
 FILE* openFile(char* fileName, char* mode);
 long checkFileSize(FILE* file);
 
+int totalLinesCounter(FILE* file);
 int validLinesCounter(FILE* file);
 void trimWhiteSpaces(char* text);
 
@@ -39,20 +40,32 @@ int main(){
 	FILE* rawFile = openFile("raw_security_events.txt", "r");
 	FILE* cleanedFile = openFile("security_events_cleaned.txt", "w");
 
+	printf("Opening raw file...\n");
+
 	if(rawFile == NULL){
 		printf("Could not open raw file!");
 		return 1;
+	}else{
+		printf("File was open with success!\n");
 	};
+
+	printf("Creating clean file...\n");
 
 	if(cleanedFile == NULL){
 		printf("Could not create new file!");
 		return 1;
+	}else{
+		printf("File created with success!\n");
 	};
+
+	int rawTotalLines = totalLinesCounter(rawFile);
 
 	FileInfo fileInfo;
 	fileInfo.fileSize = checkFileSize(rawFile);
 	fileInfo.numberOfValidLines = validLinesCounter(rawFile);
 	rewind(rawFile);
+
+	printf("\nThe origin file has:\n%d bytes of size and %d total lines.\n", fileInfo.fileSize, rawTotalLines);
 
 	char* fileContent = (char*) malloc(fileInfo.fileSize + 1);
 
@@ -64,7 +77,8 @@ int main(){
 
 	SecurityEvent* events = malloc(sizeof(SecurityEvent) * fileInfo.numberOfValidLines);
 	if(events == NULL){
-		return 0;
+		printf("Could not allocate space to struct!");
+		return 1;
 	};
 	memset(events, 0, sizeof(events));
 
@@ -76,9 +90,20 @@ int main(){
 	padronizeStatus(events, fileInfo.numberOfValidLines);
 	padronizeSource(events, fileInfo.numberOfValidLines);
 
+	printf("\nWriting on clean file...\n");
+
 	writeCleanFile(cleanedFile, events, fileInfo.numberOfValidLines);
-	free(events);
 	fclose(cleanedFile);
+
+	cleanedFile = fopen("security_events_cleaned.txt", "r");
+    if(cleanedFile == NULL) return 1;
+
+	int cleanTotalLines = (totalLinesCounter(cleanedFile) - 1); // Minus one cause of the header
+	printf("\nClean file has %d total valid lines, bringing the invalid lines to a total of %d.\n", cleanTotalLines, (rawTotalLines - cleanTotalLines));
+
+	free(events);
+
+	printf("\nClean file written with success!\nExiting...\n");
 
 	return 0;
 };
@@ -100,6 +125,17 @@ long checkFileSize(FILE* file){
 	rewind(file);
 
 	return fileSize;
+};
+
+int totalLinesCounter(FILE* file){
+	int linesCounted = 0;
+	int character;
+
+	while((character = fgetc(file)) != EOF){
+		if(character == '\n') linesCounted++;
+	};
+
+	return linesCounted;
 };
 
 int validLinesCounter(FILE* file){
