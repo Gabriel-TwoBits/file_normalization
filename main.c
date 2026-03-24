@@ -23,8 +23,10 @@ long checkFileSize(FILE* file);
 int validLinesCounter(FILE* file);
 void trimWhiteSpaces(char* text);
 void validLinesToStruct(char* fileContent, SecurityEvent events[]);
+void padronizeID(SecurityEvent events[], int size);
 void padronizeSeverity(SecurityEvent events[], int size);
 void padronizeStatus(SecurityEvent events[], int size);
+void padronizeSouce(SecurityEvent events[], int size);
 void writeCleanFile(FILE* file, SecurityEvent events[], int numberOfLines);
 
 int main(){
@@ -58,8 +60,11 @@ int main(){
 	memset(events, 0, sizeof(events));
 
 	validLinesToStruct(fileContent, events);
+
+	padronizeID(events, fileInfo.numberOfValidLines);
 	padronizeSeverity(events, fileInfo.numberOfValidLines);
 	padronizeStatus(events, fileInfo.numberOfValidLines);
+	padronizeSouce(events, fileInfo.numberOfValidLines);
 
 	writeCleanFile(cleanedFile, events, fileInfo.numberOfValidLines);
 	fclose(cleanedFile);
@@ -166,6 +171,22 @@ void validLinesToStruct(char* fileContent, SecurityEvent events[]){
             };
 		};
 		line = strtok(NULL, "\n");
+	};
+};
+
+void padronizeID(SecurityEvent events[], int size){
+	for(int i = 0; i < size; i++){
+		for(int j = 0; events[i].event_id[j]; j++){
+			events[i].event_id[j] = toupper((unsigned char)events[i].event_id[j]);
+		};
+	};
+};
+
+void padronizeSouce(SecurityEvent events[], int size){
+	for(int i = 0; i < size; i++){
+		for(int j = 0; events[i].source[j]; j++){
+			events[i].source[j] = toupper((unsigned char)events[i].source[j]);
+		};
 	};
 };
 
