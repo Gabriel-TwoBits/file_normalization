@@ -160,8 +160,8 @@ void validLinesToStruct(char* fileContent, SecurityEvent events[]){
 };
 
 void padronizeSeverity(SecurityEvent events[], int size){
-	char *acceptedValues[] = {"LOW", "MEDIUM", "HIGH", "CRITICAL"};
-	int valids = 4;
+	char *acceptedValues[] = {"LOW", "MED", "MEDIUM", "HIGH", "CRIT", "CRITICAL"};
+	int valids = sizeof(acceptedValues) / sizeof(acceptedValues[0]);
 
 	for(int i = 0; i < size; i++){
 
@@ -174,6 +174,10 @@ void padronizeSeverity(SecurityEvent events[], int size){
 		for(int k = 0; k < valids; k++){
 			if(strcmp(events[i].severity, acceptedValues[k]) == 0){
 				found = 1;
+				
+				if(strcmp(events[i].severity, "MED") == 0) strcpy(events[i].severity, "MEDIUM");
+				if(strcmp(events[i].severity, "CRIT") == 0) strcpy(events[i].severity, "CRITICAL");
+				
 				break;
 			};
 		};
@@ -185,8 +189,8 @@ void padronizeSeverity(SecurityEvent events[], int size){
 };
 
 void padronizeStatus(SecurityEvent events[], int size){
-	char *acceptedValues[] = {"OPEN", "CLOSED", "INVESTIGATING"};
-	int valids = 3;
+	char *acceptedValues[] = {"OPEN", "CLOSED", "DONE", "RESOLVED", "INVESTIGATING", "ANALYSIS", "IN_PROGRESS"};
+	int valids = sizeof(acceptedValues) / sizeof(acceptedValues[0]);
 
 	for(int i = 0; i < size; i++){
 
@@ -199,6 +203,10 @@ void padronizeStatus(SecurityEvent events[], int size){
 		for(int k = 0; k < valids; k++){
 			if(strcmp(events[i].status, acceptedValues[k]) == 0){
 				found = 1;
+
+				if(strcmp(events[i].status, "DONE") == 0 || strcmp(events[i].status, "RESOLVED") == 0) strcpy(events[i].status, "CLOSED");
+				if(strcmp(events[i].status, "ANALYSIS") == 0 || strcmp(events[i].status, "IN_PROGRESS") == 0) strcpy(events[i].status, "INVESTIGATING");
+
 				break;
 			};
 		};
