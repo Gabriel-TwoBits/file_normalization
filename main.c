@@ -23,9 +23,9 @@ long checkFileSize(FILE* file);
 int validLinesCounter(FILE* file);
 void trimWhiteSpaces(char* text);
 void validLinesToStruct(char* fileContent, SecurityEvent events[]);
-void writeCleanFile(FILE* file, SecurityEvent events[], int numberOfLines);
 void padronizeSeverity(SecurityEvent events[], int size);
 void padronizeStatus(SecurityEvent events[], int size);
+void writeCleanFile(FILE* file, SecurityEvent events[], int numberOfLines);
 
 int main(){
 	FILE* rawFile = openFile("raw_security_events.txt", "r");
@@ -126,42 +126,44 @@ void trimWhiteSpaces(char* text){
 
 void validLinesToStruct(char* fileContent, SecurityEvent events[]){
 	char *line;
-	int event_index = 0, i = 0;
+	int i = 0;
 	char separators[] = ",;|";
 
 	line = strtok(fileContent, "\n");
 
 	while(line != NULL){
 		int count = 0;
-
-		for(int j = 0; line[j] != '\0'; j++){
-			if(strchr(separators, line[j])) count ++;
-		};
+		for(int j = 0; line[j] != '\0'; j++) if(strchr(separators, line[j])) count ++;
 
 		if(count >= 3){
-			char loginStr[16];
+			char *loginStr = NULL;
 
-			sscanf(line, "%[^,;|\n]%*[,;|\n]"  // event_id
-                          "%[^,;|\n]%*[,;|\n]"  // device
-                          "%[^,;|\n]%*[,;|\n]"  // severity
-                          "%[^,;|\n]%*[,;|\n]"  // status
-                          "%[^,;|\n]%*[,;|\n]"  // loginStr
-                          "%[^,;|\n]",          // source
-                   events[i].event_id,
-                   events[i].device,
-                   events[i].severity,
-                   events[i].status,
-                   loginStr,
-                   events[i].source);
+			if (strstr(line, "id=")) {
+                sscanf(line, " %*[^=]=%[^,;|\n]%*[,;|\n]" 
+                             " %*[^=]=%[^,;|\n]%*[,;|\n]" 
+                             " %*[^=]=%[^,;|\n]%*[,;|\n]" 
+                             " %*[^=]=%[^,;|\n]%*[,;|\n]" 
+                             " %*[^=]=%m[^,;|\n]%*[,;|\n]"
+                             " %*[^=]=%[^,;|\n]",          
+                       events[i].event_id, events[i].device, events[i].severity,
+                       events[i].status, &loginStr, events[i].source);
+            } else {
+                sscanf(line, " %[^,;|\n]%*[,;|\n] %[^,;|\n]%*[,;|\n] %[^,;|\n]%*[,;|\n] %[^,;|\n]%*[,;|\n] %m[^,;|\n]%*[,;|\n] %[^,;|\n]",
+                       events[i].event_id, events[i].device, events[i].severity,
+                       events[i].status, &loginStr, events[i].source);
+            };
 			
-			if(!isdigit((unsigned char)loginStr[0])){
-				events[i].failed_logins = 0;
-			} else{
-				events[i].failed_logins = atoi(loginStr);
-			};
-
-			events[i].is_valid = 1;
-			i++;
+			if(loginStr != NULL) {
+                if(!isdigit((unsigned char)loginStr[0])){
+                    events[i].failed_logins = 0;
+                } else {
+                    events[i].failed_logins = atoi(loginStr);
+                };
+                
+                events[i].is_valid = 1;
+                free(loginStr);
+                i++;
+            };
 		};
 		line = strtok(NULL, "\n");
 	};
@@ -231,7 +233,7 @@ void writeCleanFile(FILE* file, SecurityEvent events[], int numberOfLines){
 
 		for (int i = 0; i < numberOfLines; i++){
 			if(events[i].is_valid == 0) continue;
-			fprintf(file, "%s\t;%s\t;%s\t;%s\t;%d\t;%s\n", 
+			fprintf(file, "%s;%s;%s;%s;%d;%s\n", 
 				events[i].event_id, 
 				events[i].device, 
 				events[i].severity,
