@@ -97,7 +97,7 @@ int validLinesCounter(FILE* file){
 		};
 
 		if(character == '\n'){
-			if(separatorsCounter == 6){
+			if(separatorsCounter >= 3){
 				validLines++;
 			};
 
@@ -138,19 +138,27 @@ void validLinesToStruct(char* fileContent, SecurityEvent events[]){
 			if(strchr(separators, line[j])) count ++;
 		};
 
-		if(count == 5){
+		if(count >= 3){
+			char loginStr[16];
+
 			sscanf(line, "%[^,;|\n]%*[,;|\n]"  // event_id
                           "%[^,;|\n]%*[,;|\n]"  // device
                           "%[^,;|\n]%*[,;|\n]"  // severity
                           "%[^,;|\n]%*[,;|\n]"  // status
-                          "%d%*[,;|\n]"         // failed_logins (inteiro)
+                          "%[^,;|\n]%*[,;|\n]"  // loginStr
                           "%[^,;|\n]",          // source
                    events[i].event_id,
                    events[i].device,
                    events[i].severity,
                    events[i].status,
-                   &events[i].failed_logins,
+                   loginStr,
                    events[i].source);
+			
+			if(!isdigit((unsigned char)loginStr[0])){
+				events[i].failed_logins = 0;
+			} else{
+				events[i].failed_logins = atoi(loginStr);
+			};
 
 			events[i].is_valid = 1;
 			i++;

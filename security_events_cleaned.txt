@@ -5,7 +5,7 @@ EVT-1003	;Yoga-7i	;CRITICAL	;INVESTIGATING	;8	;lsbd_collector
 EVT-1004	;Legion-5	;MEDIUM	;OPEN	;2	;endpoint
 evt-1005	;ideapad-3	;HIGH	;CLOSED	;4	;auth_module
 EVT-1006	;ThinkPad-X1	;CRITICAL	;INVESTIGATING	;7	;SOC_PIPELINE
-EVT-1007	;ThinkBook-14	;MEDIUM	;OPEN	;0	;
+EVT-1007	;ThinkBook-14	;MEDIUM	;OPEN	;0	;collector
 EVT-1009	;V15	;LOW	;CLOSED	;1	;endpoint
 EVT-1010	;ThinkPad-L14	;CRITICAL	;OPEN	;11	;auth_module
 EVT-1011	;Yoga-Slim-7	;MEDIUM	;CLOSED	;0	;lsbd_collector
@@ -15,3 +15,5 @@ EVT-1017	;Yoga-9	;CRITICAL	;OPEN	;12	;auth_module
 EVT-1018	;ThinkBook-13x	;MEDIUM	;OPEN	;3	;agent
 EVT-1019	;ThinkPad-P1	;LOW	;CLOSED	;1	;endpoint
 EVT-1020	;Legion-Slim	;HIGH	;OPEN	;5	;lsbd_collector
+EVT-1021	;ThinkPad-T14	;MEDIUM	;OPEN	;2	;
+EVT-1022	;ThinkPad-X13	;LOW	;OPEN	;0	;auth_module
